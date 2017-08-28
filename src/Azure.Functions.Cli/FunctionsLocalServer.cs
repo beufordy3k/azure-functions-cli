@@ -46,17 +46,20 @@ namespace Azure.Functions.Cli
         private async Task<Uri> DiscoverServer(bool noInteractive)
         {
             var hostSettings = _secretsManager.GetHostStartSettings();
+
+            var ipAddress = hostSettings.LocalIpAddress ?? "localhost";
+
             if (hostSettings.LocalHttpPort != default(int))
             {
-                return new Uri($"http://localhost:{hostSettings.LocalHttpPort}");
+                return new Uri($"http://{ipAddress}:{hostSettings.LocalHttpPort}");
             }
 
-            return await RecursiveDiscoverServer(0, noInteractive);
+            return await RecursiveDiscoverServer(ipAddress, 0, noInteractive);
         }
 
-        private async Task<Uri> RecursiveDiscoverServer(int iteration, bool noInteractive)
+        private async Task<Uri> RecursiveDiscoverServer(string ipAddress, int iteration, bool noInteractive)
         {
-            var server = new Uri($"http://localhost:{Port + iteration}");
+            var server = new Uri($"http://{ipAddress}:{Port + iteration}");
 
             if (!await server.IsServerRunningAsync())
             {
@@ -103,7 +106,7 @@ namespace Azure.Functions.Cli
                 }
                 else
                 {
-                    return await RecursiveDiscoverServer(iteration + 1, noInteractive);
+                    return await RecursiveDiscoverServer(ipAddress, iteration + 1, noInteractive);
                 }
             }
         }

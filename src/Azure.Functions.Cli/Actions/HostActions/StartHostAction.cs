@@ -35,9 +35,12 @@ namespace Azure.Functions.Cli.Actions.HostActions
     internal class StartHostAction : BaseAction, IDisposable
     {
         private FileSystemWatcher fsWatcher;
+        private const string DefaultHostIpAddress = "localhost";
         const int DefaultPort = 7071;
         const int DefaultTimeout = 20;
         private readonly ISecretsManager _secretsManager;
+
+        public string IpAddress { get; set; }
 
         public int Port { get; set; }
 
@@ -59,6 +62,14 @@ namespace Azure.Functions.Cli.Actions.HostActions
         public override ICommandLineParserResult ParseArgs(string[] args)
         {
             var hostSettings = _secretsManager.GetHostStartSettings();
+
+            Parser
+                .Setup<string>('i', "ipAddress")
+                .WithDescription($"Local host ip address to use. Default: {DefaultHostIpAddress}")
+                .SetDefault(string.IsNullOrEmpty(hostSettings.LocalIpAddress)
+                    ? DefaultHostIpAddress
+                    : hostSettings.LocalIpAddress)
+                .Callback(h => IpAddress = h);
 
             Parser
                 .Setup<int>('p', "port")
@@ -462,13 +473,13 @@ namespace Azure.Functions.Cli.Actions.HostActions
             if (actions.Any())
             {
                 string errors;
-                if (!ConsoleApp.RelaunchSelfElevated(new InternalUseAction { Port = Port, Actions = actions, Protocol = protocol }, out errors))
+                if (!ConsoleApp.RelaunchSelfElevated(new InternalUseAction { IpAddress = IpAddress, Port = Port, Actions = actions, Protocol = protocol }, out errors))
                 {
                     ColoredConsole.WriteLine("Error: " + errors);
                     Environment.Exit(ExitCodes.GeneralError);
                 }
             }
-            return new Uri($"{protocol}://localhost:{Port}");
+            return new Uri($"{protocol}://{IpAddress}:{Port}");
         }
 
         /// <summary>

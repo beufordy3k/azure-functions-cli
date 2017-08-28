@@ -17,6 +17,9 @@ namespace Azure.Functions.Cli.Actions
     internal class InternalUseAction : BaseAction
     {
         public List<InternalAction> Actions { get; set; }
+
+        public string IpAddress { get; set; }
+
         public int Port { get; set; }
 
         public string Protocol { get; set; }
@@ -28,6 +31,10 @@ namespace Azure.Functions.Cli.Actions
                 .WithDescription(nameof(Actions))
                 .Callback(a => Actions = a)
                 .Required();
+            Parser
+                .Setup<string>("ipaddress")
+                .WithDescription(nameof(Protocol))
+                .Callback(i => IpAddress = i);
             Parser
                 .Setup<int>("port")
                 .WithDescription(nameof(Port))
